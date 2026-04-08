@@ -1,0 +1,43 @@
+{
+  "app": {
+    "title": "Quote Builder",
+    "subtitle": "Internal Tool"
+  },
+  "input": {
+    "heading": "Customer Request",
+    "placeholder": "Paste the customer email or describe the request here...",
+    "attachFile": "Attach file",
+    "generate": "Generate Quote"
+  },
+  "result": {
+    "heading": "Generated Quote",
+    "exportPdf": "Export PDF",
+    "summaryLabel": "Request Summary",
+    "quoteMessageLabel": "Quote Message"
+  },
+  "header": {
+    "customer": "Customer",
+    "date": "Date",
+    "quoteNumber": "Quote #"
+  },
+  "products": {
+    "heading": "Products",
+    "addRow": "Add row",
+    "qty": "Qty",
+    "product": "Product",
+    "description": "Description",
+    "image": "Image",
+    "unitPrice": "Unit Price",
+    "total": "Total",
+    "productName": "Product name"
+  },
+  "charges": {
+    "heading": "Additional Charges",
+    "addRow": "Add row",
+    "descriptionCol": "Description",
+    "amountCol": "Amount",
+    "subtotal": "Products subtotal",
+    "grandTotal": "Total (excl. VAT)",
+    "placeholder": "e.g. Shipping, Installation, Discount"
+  }
+}

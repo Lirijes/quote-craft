@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Upload, Sparkles, Loader2 } from "lucide-react";
+import { useI18n } from "@/i18n/I18nProvider";
 
 interface RequestInputProps {
   onGenerate: (text: string) => void;
@@ -11,6 +12,7 @@ interface RequestInputProps {
 }
 
 export function RequestInput({ onGenerate, isGenerating }: RequestInputProps) {
+  const { t } = useI18n();
   const [text, setText] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
 
@@ -21,9 +23,9 @@ export function RequestInput({ onGenerate, isGenerating }: RequestInputProps) {
 
   return (
     <Card className="p-6 space-y-4">
-      <h2 className="text-lg font-semibold text-foreground">Customer Request</h2>
+      <h2 className="text-lg font-semibold text-foreground">{t.input.heading}</h2>
       <Textarea
-        placeholder="Paste the customer email or describe the request here..."
+        placeholder={t.input.placeholder}
         className="min-h-[160px] resize-y text-sm"
         value={text}
         onChange={(e) => setText(e.target.value)}
@@ -31,7 +33,7 @@ export function RequestInput({ onGenerate, isGenerating }: RequestInputProps) {
       <div className="flex items-center gap-3 flex-wrap">
         <label className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors">
           <Upload className="h-4 w-4" />
-          <span>{fileName ?? "Attach file"}</span>
+          <span>{fileName ?? t.input.attachFile}</span>
           <Input
             type="file"
             className="hidden"
@@ -50,7 +52,7 @@ export function RequestInput({ onGenerate, isGenerating }: RequestInputProps) {
           ) : (
             <Sparkles className="h-4 w-4 mr-2" />
           )}
-          Generate Quote
+          {t.input.generate}
         </Button>
       </div>
     </Card>

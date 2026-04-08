@@ -1,0 +1,43 @@
+{
+  "app": {
+    "title": "Offertbyggare",
+    "subtitle": "Internt verktyg"
+  },
+  "input": {
+    "heading": "Kundförfrågan",
+    "placeholder": "Klistra in kundens e-post eller beskriv förfrågan här...",
+    "attachFile": "Bifoga fil",
+    "generate": "Generera offert"
+  },
+  "result": {
+    "heading": "Genererad offert",
+    "exportPdf": "Exportera PDF",
+    "summaryLabel": "Sammanfattning av förfrågan",
+    "quoteMessageLabel": "Offertmeddelande"
+  },
+  "header": {
+    "customer": "Kund",
+    "date": "Datum",
+    "quoteNumber": "Offert #"
+  },
+  "products": {
+    "heading": "Produkter",
+    "addRow": "Lägg till rad",
+    "qty": "Antal",
+    "product": "Produkt",
+    "description": "Beskrivning",
+    "image": "Bild",
+    "unitPrice": "Á-pris",
+    "total": "Summa",
+    "productName": "Produktnamn"
+  },
+  "charges": {
+    "heading": "Övriga kostnader",
+    "addRow": "Lägg till rad",
+    "descriptionCol": "Beskrivning",
+    "amountCol": "Belopp",
+    "subtotal": "Produkter delsumma",
+    "grandTotal": "Totalt (exkl. moms)",
+    "placeholder": "t.ex. Frakt, Installation, Rabatt"
+  }
+}

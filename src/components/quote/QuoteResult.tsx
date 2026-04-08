@@ -9,12 +9,14 @@ import { ProductTable } from "./ProductTable";
 import { ChargesTable } from "./ChargesTable";
 import type { QuoteData } from "@/types/quote";
 import { exportQuotePdf } from "@/lib/export-pdf";
+import { useI18n } from "@/i18n/I18nProvider";
 
 interface QuoteResultProps {
   initialData: QuoteData;
 }
 
 export function QuoteResult({ initialData }: QuoteResultProps) {
+  const { t } = useI18n();
   const [data, setData] = useState<QuoteData>(initialData);
 
   const updateField = <K extends keyof QuoteData>(field: K, value: QuoteData[K]) => {
@@ -26,20 +28,17 @@ export function QuoteResult({ initialData }: QuoteResultProps) {
   return (
     <Card className="p-6 space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-foreground">Generated Quote</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t.result.heading}</h2>
         <Button onClick={() => exportQuotePdf(data)} variant="outline">
           <FileDown className="h-4 w-4 mr-2" />
-          Export PDF
+          {t.result.exportPdf}
         </Button>
       </div>
 
-      <QuoteHeader
-        data={data}
-        onChange={(field, value) => updateField(field, value)}
-      />
+      <QuoteHeader data={data} onChange={(field, value) => updateField(field, value)} />
 
       <div className="space-y-1.5">
-        <Label className="text-xs text-muted-foreground">Request Summary</Label>
+        <Label className="text-xs text-muted-foreground">{t.result.summaryLabel}</Label>
         <Textarea
           className="text-sm resize-y min-h-[80px]"
           value={data.summary}
@@ -47,19 +46,12 @@ export function QuoteResult({ initialData }: QuoteResultProps) {
         />
       </div>
 
-      <ProductTable
-        products={data.products}
-        onChange={(products) => updateField("products", products)}
-      />
+      <ProductTable products={data.products} onChange={(products) => updateField("products", products)} />
 
-      <ChargesTable
-        charges={data.charges}
-        onChange={(charges) => updateField("charges", charges)}
-        productTotal={productTotal}
-      />
+      <ChargesTable charges={data.charges} onChange={(charges) => updateField("charges", charges)} productTotal={productTotal} />
 
       <div className="space-y-1.5">
-        <Label className="text-xs text-muted-foreground">Quote Message</Label>
+        <Label className="text-xs text-muted-foreground">{t.result.quoteMessageLabel}</Label>
         <Textarea
           className="text-sm resize-y min-h-[160px]"
           value={data.quoteText}
