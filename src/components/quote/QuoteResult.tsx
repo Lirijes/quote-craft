@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { FileDown } from "lucide-react";
 import { QuoteHeader } from "./QuoteHeader";
 import { ProductTable } from "./ProductTable";
+import { ChargesTable } from "./ChargesTable";
 import type { QuoteData } from "@/types/quote";
 import { exportQuotePdf } from "@/lib/export-pdf";
 
@@ -19,6 +20,8 @@ export function QuoteResult({ initialData }: QuoteResultProps) {
   const updateField = <K extends keyof QuoteData>(field: K, value: QuoteData[K]) => {
     setData((prev) => ({ ...prev, [field]: value }));
   };
+
+  const productTotal = data.products.reduce((sum, p) => sum + p.quantity * p.price, 0);
 
   return (
     <Card className="p-6 space-y-6">
@@ -47,6 +50,12 @@ export function QuoteResult({ initialData }: QuoteResultProps) {
       <ProductTable
         products={data.products}
         onChange={(products) => updateField("products", products)}
+      />
+
+      <ChargesTable
+        charges={data.charges}
+        onChange={(charges) => updateField("charges", charges)}
+        productTotal={productTotal}
       />
 
       <div className="space-y-1.5">

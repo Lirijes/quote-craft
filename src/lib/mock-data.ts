@@ -40,6 +40,11 @@ export function generateMockQuote(inputText: string): QuoteData {
         price: 350,
       },
     ],
+    charges: [
+      { id: crypto.randomUUID(), label: "Shipping", amount: 4500 },
+      { id: crypto.randomUUID(), label: "Installation / Montage", amount: 12000 },
+      { id: crypto.randomUUID(), label: "Discount", amount: -3000 },
+    ],
     quoteText: `Dear Customer,
 
 Thank you for your inquiry regarding playground equipment. Based on your requirements, we have prepared the following quote for your consideration.
