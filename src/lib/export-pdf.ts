@@ -5,33 +5,33 @@ export async function exportQuotePdf(data: QuoteData) {
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 20;
+  const margin = 32;
   const contentWidth = pageWidth - margin * 2;
   let y = 25;
 
   // Header
   doc.setFontSize(20);
   doc.setFont("helvetica", "bold");
-  doc.text("QUOTE", margin, y);
+  doc.text("READYMADE AB", margin, y);
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`Quote #: ${data.quoteNumber}`, pageWidth - margin, y, { align: "right" });
+  doc.text(`Offertnr: ${data.quoteNumber}`, pageWidth - margin, y, { align: "right" });
   y += 6;
-  doc.text(`Date: ${data.date}`, pageWidth - margin, y, { align: "right" });
+  doc.text(`Datum: ${data.date}`, pageWidth - margin, y, { align: "right" });
   y += 12;
 
   // Customer
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.text("Customer:", margin, y);
+  doc.text("Kund:", margin, y);
   doc.setFont("helvetica", "normal");
   doc.text(data.customerName, margin + 22, y);
   y += 10;
 
   // Summary
   doc.setFont("helvetica", "bold");
-  doc.text("Summary", margin, y);
+  doc.text("Sammanfattning", margin, y);
   y += 5;
   doc.setFont("helvetica", "normal");
   const summaryLines = doc.splitTextToSize(data.summary, contentWidth);
@@ -51,11 +51,11 @@ export async function exportQuotePdf(data: QuoteData) {
   doc.rect(margin, y - 4, contentWidth, 8, "F");
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
-  doc.text("QTY", colX.qty, y);
-  doc.text("PRODUCT", colX.name, y);
-  doc.text("DESCRIPTION", colX.desc, y);
-  doc.text("PRICE", colX.price, y);
-  doc.text("TOTAL", colX.total, y);
+  doc.text("Antal", colX.qty, y);
+  doc.text("Produkt", colX.name, y);
+  doc.text("Beskrivning", colX.desc, y);
+  doc.text("Pris", colX.price, y);
+  doc.text("Total", colX.total, y);
   y += 7;
 
   // Product rows
@@ -80,7 +80,7 @@ export async function exportQuotePdf(data: QuoteData) {
   doc.setDrawColor(180);
   doc.line(colX.price, y - 4, pageWidth - margin, y - 4);
   doc.setFontSize(9);
-  doc.text("Products subtotal:", colX.price, y);
+  doc.text("Produkter delsumma:", colX.price -5, y);
   doc.text(`${productTotal.toLocaleString("sv-SE")} kr`, colX.total, y);
   y += 7;
 
@@ -90,8 +90,27 @@ export async function exportQuotePdf(data: QuoteData) {
       doc.addPage();
       y = 25;
     }
-    doc.text(charge.label || "—", colX.price, y);
-    doc.text(`${charge.amount.toLocaleString("sv-SE")} kr`, colX.total, y);
+
+    let amount = Number(charge.amount);
+
+    if (isNaN(amount)) {
+      console.warn("INVALID AMOUNT:", charge.amount);
+      amount = 0;
+    }
+
+    // discount negativ
+    if (charge.id === "discount") {
+      amount = -Math.abs(amount);
+    }
+
+    doc.text(String(charge.label || "—"), colX.price, y);
+
+    doc.text(
+      `${amount.toLocaleString("sv-SE")} kr`,
+      colX.total,
+      y
+    );
+
     y += 6;
   }
 
@@ -103,11 +122,11 @@ export async function exportQuotePdf(data: QuoteData) {
   doc.line(colX.price, y - 4, pageWidth - margin, y - 4);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("Total (excl. VAT):", colX.price, y);
+  doc.text("Total (ex. Moms):", colX.price - 5, y);
   doc.text(`${grandTotal.toLocaleString("sv-SE")} kr`, colX.total, y);
   y += 14;
 
-  // Quote text
+  // Offert text
   if (y > 230) {
     doc.addPage();
     y = 25;

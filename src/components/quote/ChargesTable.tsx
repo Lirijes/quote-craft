@@ -14,7 +14,19 @@ export function ChargesTable({ charges, onChange, productTotal }: ChargesTablePr
   const { t } = useI18n();
 
   const updateCharge = (id: string, field: keyof QuoteCharge, value: string | number) => {
-    onChange(charges.map((c) => (c.id === id ? { ...c, [field]: value } : c)));
+  onChange(
+      charges.map((c) =>
+        c.id === id
+          ? {
+              ...c,
+              [field]:
+                field === "amount"
+                  ? Number(value) || 0
+                  : value,
+            }
+          : c
+      )
+    );
   };
 
   const addCharge = () => {

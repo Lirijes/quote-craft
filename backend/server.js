@@ -61,43 +61,27 @@ app.post('/api/dato/query', async (req, res) => {
 // Generate quote endpoint
 app.post('/api/generate-quote', async (req, res) => {
   const { emailText } = req.body;
+
   if (!emailText) {
     return res.status(400).json({ error: 'emailText is required' });
   }
 
-  try {
-    const prompt = `Analyze this email text and generate a quote structure. Return only valid JSON with the following structure:
-
-{
-  "summary": "brief summary of the quote",
-  "products": [
-    {"name": "product name", "quantity": 1, "price": 100.00}
-  ],
-  "shipping": 50.00,
-  "installation": 200.00,
-  "discount": 10.00
-}
-
-Email text: ${emailText}`;
-
-    const response = await axios.post('https://api.anthropic.com/v1/messages', {
-      model: 'claude-3-sonnet-20240229',
-      max_tokens: 1000,
-      messages: [{ role: 'user', content: prompt }]
-    }, {
-      headers: {
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json'
+  // Mock data response
+  return res.json({
+    summary: "Test offert",
+    products: [
+      {
+        name: "Gungställning",
+        description: "En robust gungställning i trä, perfekt för barn i alla åldrar. Med flera gungor och en klättervägg för extra roligheter.",
+        quantity: 2,
+        price: 12000
       }
-    });
+    ],
+    shipping: 2000,
+    installation: 8000,
+    discount: 0
+  });
 
-    const content = response.data.content[0].text;
-    const result = JSON.parse(content);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
 });
 
 // Health check
