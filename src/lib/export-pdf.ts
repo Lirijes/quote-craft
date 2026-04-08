@@ -1,7 +1,6 @@
 import type { QuoteData } from "@/types/quote";
 
 export async function exportQuotePdf(data: QuoteData) {
-  // Dynamic import to keep bundle small
   const { jsPDF } = await import("jspdf");
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -40,7 +39,13 @@ export async function exportQuotePdf(data: QuoteData) {
   y += summaryLines.length * 4.5 + 8;
 
   // Product table header
-  const colX = { qty: margin, name: margin + 15, desc: margin + 55, price: pageWidth - margin - 50, total: pageWidth - margin - 22 };
+  const colX = {
+    qty: margin,
+    name: margin + 15,
+    desc: margin + 55,
+    price: pageWidth - margin - 50,
+    total: pageWidth - margin - 22,
+  };
 
   doc.setFillColor(240, 240, 243);
   doc.rect(margin, y - 4, contentWidth, 8, "F");
@@ -69,14 +74,36 @@ export async function exportQuotePdf(data: QuoteData) {
     y += 6;
   }
 
-  // Total
+  // Products subtotal
+  const productTotal = data.products.reduce((s, p) => s + p.quantity * p.price, 0);
+  y += 2;
+  doc.setDrawColor(180);
+  doc.line(colX.price, y - 4, pageWidth - margin, y - 4);
+  doc.setFontSize(9);
+  doc.text("Products subtotal:", colX.price, y);
+  doc.text(`${productTotal.toLocaleString("sv-SE")} kr`, colX.total, y);
+  y += 7;
+
+  // Additional charges
+  for (const charge of data.charges) {
+    if (y > 260) {
+      doc.addPage();
+      y = 25;
+    }
+    doc.text(charge.label || "—", colX.price, y);
+    doc.text(`${charge.amount.toLocaleString("sv-SE")} kr`, colX.total, y);
+    y += 6;
+  }
+
+  // Grand total
+  const chargesTotal = data.charges.reduce((s, c) => s + c.amount, 0);
+  const grandTotal = productTotal + chargesTotal;
   y += 2;
   doc.setDrawColor(100);
   doc.line(colX.price, y - 4, pageWidth - margin, y - 4);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  const grandTotal = data.products.reduce((s, p) => s + p.quantity * p.price, 0);
-  doc.text("Total:", colX.price, y);
+  doc.text("Total (excl. VAT):", colX.price, y);
   doc.text(`${grandTotal.toLocaleString("sv-SE")} kr`, colX.total, y);
   y += 14;
 
