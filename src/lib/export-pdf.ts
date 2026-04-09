@@ -1,5 +1,7 @@
 import type { QuoteData } from "@/types/quote";
 
+const VAT_RATE = 0.25;
+
 async function loadImageAsDataUrl(url: string): Promise<string | null> {
   try {
     const response = await fetch(url);
@@ -15,7 +17,7 @@ async function loadImageAsDataUrl(url: string): Promise<string | null> {
   }
 }
 
-export async function exportQuotePdf(data: QuoteData) {
+export async function exportQuotePdf(data: QuoteData, showVat = false) {
   const { jsPDF } = await import("jspdf");
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
@@ -53,24 +55,27 @@ export async function exportQuotePdf(data: QuoteData) {
   doc.text(summaryLines, margin, y);
   y += summaryLines.length * 4.5 + 8;
 
-  // Product table header
+  // Product table columns
+  // littra | qty | desc | img | price | total
   const colX = {
-    qty: margin,
-    desc: margin + 12,
-    img: margin + 80,
-    price: pageWidth - margin - 50,
-    total: pageWidth - margin - 20,
+    littra: margin,
+    qty: margin + 18,
+    desc: margin + 28,
+    img: margin + 88,
+    price: pageWidth - margin - 46,
+    total: pageWidth - margin - 18,
   };
 
   doc.setFillColor(240, 240, 243);
   doc.rect(margin, y - 4, contentWidth, 8, "F");
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
+  doc.text("Littra", colX.littra, y);
   doc.text("Antal", colX.qty, y);
   doc.text("Beskrivning", colX.desc, y);
   doc.text("Bild", colX.img, y);
-  doc.text("Á-pris", colX.price, y);
-  doc.text("Summa", colX.total, y);
+  doc.text("Á-pris", colX.price, y, { align: "right" });
+  doc.text("Summa", colX.total, y, { align: "right" });
   y += 7;
 
   // Product rows
@@ -96,10 +101,11 @@ export async function exportQuotePdf(data: QuoteData) {
 
     const textY = hasImage ? y + imgSize / 2 + 1 : y;
 
+    doc.text(product.littra ?? "", colX.littra, textY);
     doc.text(String(product.quantity), colX.qty, textY);
-    doc.text(product.description.substring(0, 35), colX.desc, textY);
-    doc.text(`${product.price.toLocaleString("sv-SE")}`, colX.price, textY);
-    doc.text(`${(product.quantity * product.price).toLocaleString("sv-SE")} kr`, colX.total, textY);
+    doc.text(product.description.substring(0, 32), colX.desc, textY);
+    doc.text(`${product.price.toLocaleString("sv-SE")}`, colX.price, textY, { align: "right" });
+    doc.text(`${(product.quantity * product.price).toLocaleString("sv-SE")} kr`, colX.total, textY, { align: "right" });
 
     if (imageDataUrls[i]) {
       try {
@@ -116,10 +122,10 @@ export async function exportQuotePdf(data: QuoteData) {
   const productTotal = data.products.reduce((s, p) => s + p.quantity * p.price, 0);
   y += 2;
   doc.setDrawColor(180);
-  doc.line(colX.price, y - 4, pageWidth - margin, y - 4);
+  doc.line(colX.price - 10, y - 4, pageWidth - margin, y - 4);
   doc.setFontSize(9);
-  doc.text("Produkter delsumma:", colX.price - 5, y);
-  doc.text(`${productTotal.toLocaleString("sv-SE")} kr`, colX.total, y);
+  doc.text("Produkter delsumma:", colX.price - 10, y);
+  doc.text(`${productTotal.toLocaleString("sv-SE")} kr`, colX.total, y, { align: "right" });
   y += 7;
 
   // Additional charges
@@ -138,13 +144,13 @@ export async function exportQuotePdf(data: QuoteData) {
     const label = String(charge.label || "—");
     const amountStr = amount.toLocaleString("sv-SE") + " kr";
 
-    doc.text(label, colX.qty, y);
-    doc.text(amountStr, colX.total, y);
+    doc.text(label, colX.littra, y);
+    doc.text(amountStr, colX.total, y, { align: "right" });
 
     y += 6;
   }
 
-  // Grand total
+  // Grand total (excl. VAT)
   const chargesTotal = data.charges.reduce((s, c) => {
     const a = typeof c.amount === "number" ? c.amount : parseFloat(String(c.amount).replace(/[^0-9.\-]/g, "")) || 0;
     return s + (c.id === "discount" ? -Math.abs(a) : a);
@@ -152,12 +158,34 @@ export async function exportQuotePdf(data: QuoteData) {
   const grandTotal = productTotal + chargesTotal;
   y += 2;
   doc.setDrawColor(100);
-  doc.line(colX.price, y - 4, pageWidth - margin, y - 4);
+  doc.line(colX.price - 10, y - 4, pageWidth - margin, y - 4);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("Total (ex. Moms):", colX.price - 5, y);
-  doc.text(`${grandTotal.toLocaleString("sv-SE")} kr`, colX.total, y);
-  y += 14;
+  doc.text("Total (ex. Moms):", colX.price - 10, y);
+  doc.text(`${grandTotal.toLocaleString("sv-SE")} kr`, colX.total, y, { align: "right" });
+  y += 8;
+
+  // VAT rows (optional)
+  if (showVat) {
+    const vatAmount = grandTotal * VAT_RATE;
+    const totalInclVat = grandTotal + vatAmount;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text("Moms (25%):", colX.price - 10, y);
+    doc.text(`${vatAmount.toLocaleString("sv-SE")} kr`, colX.total, y, { align: "right" });
+    y += 6;
+
+    doc.setDrawColor(100);
+    doc.line(colX.price - 10, y - 2, pageWidth - margin, y - 2);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("Total (inkl. Moms):", colX.price - 10, y + 4);
+    doc.text(`${totalInclVat.toLocaleString("sv-SE")} kr`, colX.total, y + 4, { align: "right" });
+    y += 12;
+  } else {
+    y += 6;
+  }
 
   // Offert text
   if (y > 230) {

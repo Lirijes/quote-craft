@@ -18,7 +18,7 @@ export function ProductTable({ products, onChange }: ProductTableProps) {
   };
 
   const addProduct = () => {
-    onChange([...products, { id: crypto.randomUUID(), description: "", quantity: 1, price: 0 }]);
+    onChange([...products, { id: crypto.randomUUID(), littra: "", description: "", quantity: 1, price: 0 }]);
   };
 
   const removeProduct = (id: string) => {
@@ -45,11 +45,12 @@ export function ProductTable({ products, onChange }: ProductTableProps) {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-muted/60 text-muted-foreground text-xs">
-                <th className="text-left p-3 font-medium w-16">{t.products.qty}</th>
+                <th className="text-left p-3 font-medium w-20">{t.products.littra}</th>
+                <th className="text-left p-3 font-medium w-12">{t.products.qty}</th>
                 <th className="text-left p-3 font-medium">{t.products.description}</th>
-                <th className="text-center p-3 font-medium w-24">{t.products.image}</th>
-                <th className="text-right p-3 font-medium w-28">{t.products.unitPrice}</th>
-                <th className="text-right p-3 font-medium w-28">{t.products.total}</th>
+                <th className="text-center p-3 font-medium w-32">{t.products.image}</th>
+                <th className="text-right p-3 font-medium w-20">{t.products.unitPrice}</th>
+                <th className="text-right p-3 font-medium w-24">{t.products.total}</th>
                 <th className="w-10 p-3" />
               </tr>
             </thead>
@@ -87,7 +88,10 @@ function ProductRow({
   return (
     <tr className="border-t border-border">
       <td className="p-2">
-        <Input type="number" min={1} className="w-16 h-8 text-sm text-center" value={product.quantity} onChange={(e) => onUpdate(product.id, "quantity", parseInt(e.target.value) || 0)} />
+        <Input className="w-20 h-8 text-sm" value={product.littra ?? ""} onChange={(e) => onUpdate(product.id, "littra", e.target.value)} placeholder={t.products.littra} />
+      </td>
+      <td className="p-2">
+        <Input type="number" min={1} className="w-12 h-8 text-sm text-center" value={product.quantity} onChange={(e) => onUpdate(product.id, "quantity", parseInt(e.target.value) || 0)} />
       </td>
       <td className="p-2">
         <Input className="h-8 text-sm" value={product.description} onChange={(e) => onUpdate(product.id, "description", e.target.value)} placeholder={t.products.description} />
@@ -96,16 +100,16 @@ function ProductRow({
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) onImageUpload(product.id, file); }} />
         {product.imageUrl ? (
           <button type="button" onClick={() => fileRef.current?.click()} className="mx-auto block rounded overflow-hidden border border-border hover:border-primary transition-colors">
-            <img src={product.imageUrl} alt="" className="h-16 w-16 object-cover" />
+            <img src={product.imageUrl} alt="" className="h-20 w-20 object-cover" />
           </button>
         ) : (
-          <Button variant="ghost" size="icon" className="h-16 w-16 text-muted-foreground" onClick={() => fileRef.current?.click()}>
+          <Button variant="ghost" size="icon" className="h-20 w-20 text-muted-foreground" onClick={() => fileRef.current?.click()}>
             <ImagePlus className="h-5 w-5" />
           </Button>
         )}
       </td>
       <td className="p-2">
-        <Input type="number" min={0} className="w-28 h-8 text-sm text-right" value={product.price} onChange={(e) => onUpdate(product.id, "price", parseFloat(e.target.value) || 0)} />
+        <Input type="number" min={0} className="w-20 h-8 text-sm text-right" value={product.price} onChange={(e) => onUpdate(product.id, "price", parseFloat(e.target.value) || 0)} />
       </td>
       <td className="p-3 text-right font-medium tabular-nums">
         {(product.quantity * product.price).toLocaleString("sv-SE")} kr

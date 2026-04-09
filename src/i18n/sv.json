@@ -23,6 +23,7 @@
   "products": {
     "heading": "Produkter",
     "addRow": "Lägg till rad",
+    "littra": "Littra",
     "qty": "Antal",
     "product": "Produkt",
     "description": "Beskrivning",
@@ -38,6 +39,9 @@
     "amountCol": "Belopp",
     "subtotal": "Produkter delsumma",
     "grandTotal": "Totalt (exkl. moms)",
+    "vatToggle": "Visa moms (25%)",
+    "vatAmount": "Moms (25%)",
+    "totalInclVat": "Totalt (inkl. moms)",
     "placeholder": "t.ex. Frakt, Installation, Rabatt"
   }
 }

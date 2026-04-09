@@ -1,18 +1,24 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Plus, Trash2 } from "lucide-react";
 import type { QuoteCharge } from "@/types/quote";
 import sv from "@/i18n/sv.json";
 
 const t = sv;
 
+const VAT_RATE = 0.25;
+
 interface ChargesTableProps {
   charges: QuoteCharge[];
   onChange: (charges: QuoteCharge[]) => void;
   productTotal: number;
+  showVat: boolean;
+  onToggleVat: () => void;
 }
 
-export function ChargesTable({ charges, onChange, productTotal }: ChargesTableProps) {
+export function ChargesTable({ charges, onChange, productTotal, showVat, onToggleVat }: ChargesTableProps) {
   const updateCharge = (id: string, field: keyof QuoteCharge, value: string | number) => {
     onChange(
       charges.map((c) =>
@@ -33,15 +39,23 @@ export function ChargesTable({ charges, onChange, productTotal }: ChargesTablePr
 
   const chargesTotal = charges.reduce((sum, c) => sum + c.amount, 0);
   const grandTotal = productTotal + chargesTotal;
+  const vatAmount = grandTotal * VAT_RATE;
+  const totalInclVat = grandTotal + vatAmount;
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-foreground">{t.charges.heading}</h3>
-        <Button variant="outline" size="sm" onClick={addCharge}>
-          <Plus className="h-3.5 w-3.5 mr-1" />
-          {t.charges.addRow}
-        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Switch id="vat-toggle" checked={showVat} onCheckedChange={onToggleVat} />
+            <Label htmlFor="vat-toggle" className="text-xs text-muted-foreground cursor-pointer">{t.charges.vatToggle}</Label>
+          </div>
+          <Button variant="outline" size="sm" onClick={addCharge}>
+            <Plus className="h-3.5 w-3.5 mr-1" />
+            {t.charges.addRow}
+          </Button>
+        </div>
       </div>
 
       <div className="border rounded-lg overflow-hidden">
@@ -81,6 +95,20 @@ export function ChargesTable({ charges, onChange, productTotal }: ChargesTablePr
               <td className="p-3 text-right font-bold text-base tabular-nums">{grandTotal.toLocaleString("sv-SE")} kr</td>
               <td />
             </tr>
+            {showVat && (
+              <>
+                <tr className="border-t border-border">
+                  <td className="p-3 text-right text-sm text-muted-foreground">{t.charges.vatAmount}</td>
+                  <td className="p-3 text-right tabular-nums text-muted-foreground">{vatAmount.toLocaleString("sv-SE")} kr</td>
+                  <td />
+                </tr>
+                <tr className="border-t border-foreground/20 bg-muted/30">
+                  <td className="p-3 text-right text-sm font-bold">{t.charges.totalInclVat}</td>
+                  <td className="p-3 text-right font-bold text-base tabular-nums">{totalInclVat.toLocaleString("sv-SE")} kr</td>
+                  <td />
+                </tr>
+              </>
+            )}
           </tfoot>
         </table>
       </div>

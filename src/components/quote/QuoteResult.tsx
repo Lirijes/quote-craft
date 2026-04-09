@@ -19,6 +19,7 @@ interface QuoteResultProps {
 
 export function QuoteResult({ initialData }: QuoteResultProps) {
   const [data, setData] = useState<QuoteData>(initialData);
+  const [showVat, setShowVat] = useState(false);
 
   useEffect(() => {
     setData(initialData);
@@ -34,7 +35,7 @@ export function QuoteResult({ initialData }: QuoteResultProps) {
     <Card className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-foreground">{t.result.heading}</h2>
-        <Button onClick={() => exportQuotePdf(data)} variant="outline">
+        <Button onClick={() => exportQuotePdf(data, showVat)} variant="outline">
           <FileDown className="h-4 w-4 mr-2" />
           {t.result.exportPdf}
         </Button>
@@ -54,7 +55,7 @@ export function QuoteResult({ initialData }: QuoteResultProps) {
 
       <ProductTable products={data.products} onChange={(products) => updateField("products", products)} />
 
-      <ChargesTable charges={data.charges} onChange={(charges) => updateField("charges", charges)} productTotal={productTotal} />
+      <ChargesTable charges={data.charges} onChange={(charges) => updateField("charges", charges)} productTotal={productTotal} showVat={showVat} onToggleVat={() => setShowVat((v) => !v)} />
 
       <div className="space-y-1.5">
         <Label className="text-xs text-muted-foreground">{t.result.quoteMessageLabel}</Label>

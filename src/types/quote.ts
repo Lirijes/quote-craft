@@ -1,5 +1,6 @@
 export interface QuoteProduct {
   id: string;
+  littra?: string;
   description: string;
   quantity: number;
   price: number;
