@@ -2,9 +2,31 @@ import type { QuoteData } from "@/types/quote";
 
 const VAT_RATE = 0.25;
 
+// Safely coerce any runtime value (string, quoted string, "0 kr", etc.) to a
+// finite number. TypeScript types charge amounts as `number`, but the AI
+// backend can return strings.
+function toNum(v: unknown): number {
+  if (typeof v === "number" && isFinite(v)) return v;
+  const n = parseFloat(String(v).replace(/[^0-9.\-]/g, ""));
+  return isFinite(n) ? n : 0;
+}
+
+// jsPDF's built-in fonts (helvetica, etc.) only support Latin-1 (0x00–0xFF).
+// toLocaleString("sv-SE") emits:
+//   U+2212 MINUS SIGN           for negative numbers  → outside Latin-1 → corruption
+//   U+202F NARROW NO-BREAK SPACE as thousands sep     → outside Latin-1 → corruption
+// Replace both with their plain-ASCII equivalents before passing to doc.text().
+function fmt(n: number): string {
+  return n
+    .toLocaleString("sv-SE")
+    .replace(/\u2212/g, "-")           // Unicode minus → hyphen-minus
+    .replace(/[\u00a0\u202f]/g, " ");  // Any non-breaking space → regular space
+}
+
 async function loadImageAsDataUrl(url: string): Promise<string | null> {
   try {
     const response = await fetch(url);
+    if (!response.ok) return null; // graceful 404 / error fallback
     const blob = await response.blob();
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -21,177 +43,196 @@ export async function exportQuotePdf(data: QuoteData, showVat = false) {
   const { jsPDF } = await import("jspdf");
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 20;
-  const contentWidth = pageWidth - margin * 2;
-  let y = 25;
+  const pageWidth  = doc.internal.pageSize.getWidth(); // 210mm
+  const margin     = 20;
+  const rightEdge  = pageWidth - margin;               // 190mm
+  const contentWidth = pageWidth - margin * 2;         // 170mm
+  const lineH      = 4.5;                              // baseline-to-baseline (mm)
+  let y = 18;
 
-  // Header
-  doc.setFontSize(20);
-  doc.setFont("helvetica", "bold");
-  doc.text("READYMADE AB", margin, y);
+  // ── LOGO / HEADER ──────────────────────────────────────────────────────────
+  // Load /logo.png from the public folder. Returns null on 404 → falls back
+  // to the company name as text. Place a logo.png in /public to activate it.
+  const logoData = await loadImageAsDataUrl("/logo.png");
+  const headerTopY = y;
 
-  doc.setFontSize(10);
+  if (logoData) {
+    try {
+      // Scale proportionally to 45mm wide
+      const imgProps = doc.getImageProperties(logoData);
+      const logoW = 45;
+      const logoH = (imgProps.height * logoW) / imgProps.width;
+      doc.addImage(logoData, imgProps.fileType || "PNG", margin, headerTopY - 3, logoW, logoH);
+    } catch {
+      // Unsupported format – fall through to text
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("READYMADE AB", margin, headerTopY + 6);
+    }
+  } else {
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("READYMADE AB", margin, headerTopY + 6);
+  }
+
+  // Right-aligned info block: Offertnr, Datum, Kund – all at rightEdge
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text(`Offertnr: ${data.quoteNumber}`, pageWidth - margin, y, { align: "right" });
-  y += 6;
-  doc.text(`Datum: ${data.date}`, pageWidth - margin, y, { align: "right" });
-  y += 12;
+  doc.text(`Offertnr: ${data.quoteNumber}`, rightEdge, headerTopY,      { align: "right" });
+  doc.text(`Datum: ${data.date}`,           rightEdge, headerTopY + 5,  { align: "right" });
+  doc.text(`Kund: ${data.customerName}`,    rightEdge, headerTopY + 10, { align: "right" });
 
-  // Customer
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "bold");
-  doc.text("Kund:", margin, y);
-  doc.setFont("helvetica", "normal");
-  doc.text(data.customerName, margin + 22, y);
-  y += 10;
+  y = headerTopY + 22;
 
-  // Summary
+  // ── SUMMARY TEXT ───────────────────────────────────────────────────────────
   doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
   doc.text("Sammanfattning", margin, y);
   y += 5;
   doc.setFont("helvetica", "normal");
   const summaryLines = doc.splitTextToSize(data.summary, contentWidth);
   doc.text(summaryLines, margin, y);
-  y += summaryLines.length * 4.5 + 8;
+  y += summaryLines.length * lineH + 8;
 
-  // Product table columns
-  // littra | qty | desc | img | price | total
-  const colX = {
-    littra: margin,
-    qty: margin + 18,
-    desc: margin + 28,
-    img: margin + 88,
-    price: pageWidth - margin - 46,
-    total: pageWidth - margin - 18,
+  // ── PRODUCT TABLE ──────────────────────────────────────────────────────────
+  // 6 columns across the full 170mm content width:
+  //   Littra 18 | Antal 12 | Beskrivning 57 | Bild 22 | Á-pris 31 | Summa 30
+  //   18 + 12 + 57 + 22 + 31 + 30 = 170mm ✓
+  //
+  // littraL / qtyL / descL / imgL are LEFT edges.
+  // priceR / totalR are RIGHT edges (text rendered with { align: "right" }).
+  const col = {
+    littraL: margin,         // 20mm
+    qtyL:    margin + 18,    // 38mm
+    descL:   margin + 30,    // 50mm
+    descW:   57,             // max text width for description wrapping
+    imgL:    margin + 87,    // 107mm
+    priceR:  margin + 140,   // 160mm  ← right edge of Á-pris column
+    totalR:  rightEdge,      // 190mm  ← right edge of Summa column
   };
 
+  // Table header background + column labels
   doc.setFillColor(240, 240, 243);
   doc.rect(margin, y - 4, contentWidth, 8, "F");
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
-  doc.text("Littra", colX.littra, y);
-  doc.text("Antal", colX.qty, y);
-  doc.text("Beskrivning", colX.desc, y);
-  doc.text("Bild", colX.img, y);
-  doc.text("Á-pris", colX.price, y, { align: "right" });
-  doc.text("Summa", colX.total, y, { align: "right" });
+  doc.text("Littra",      col.littraL, y);
+  doc.text("Antal",       col.qtyL,    y);
+  doc.text("Beskrivning", col.descL,   y);
+  doc.text("Bild",        col.imgL,    y);
+  doc.text("A-pris",      col.priceR,  y, { align: "right" });
+  doc.text("Summa",       col.totalR,  y, { align: "right" });
   y += 7;
 
-  // Product rows
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-
-  // Pre-load all images
+  // Pre-load all product images in parallel
   const imageDataUrls: (string | null)[] = await Promise.all(
     data.products.map((p) => (p.imageUrl ? loadImageAsDataUrl(p.imageUrl) : Promise.resolve(null)))
   );
 
   const imgSize = 18; // mm
 
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+
   for (let i = 0; i < data.products.length; i++) {
-    const product = data.products[i];
+    const product  = data.products[i];
     const hasImage = !!imageDataUrls[i];
-    const rowHeight = hasImage ? imgSize + 2 : 6;
 
-    if (y + rowHeight > 270) {
-      doc.addPage();
-      y = 25;
-    }
+    // Wrap the description to fit the column; row height adapts to the taller
+    // of the wrapped text or the image.
+    const descLines = doc.splitTextToSize(product.description || "", col.descW);
+    const textH     = descLines.length * lineH;
+    const rowHeight  = hasImage ? Math.max(imgSize + 4, textH + 4) : textH + 4;
 
-    const textY = hasImage ? y + imgSize / 2 + 1 : y;
+    if (y + rowHeight > 270) { doc.addPage(); y = 25; }
 
-    doc.text(product.littra ?? "", colX.littra, textY);
-    doc.text(String(product.quantity), colX.qty, textY);
-    doc.text(product.description.substring(0, 32), colX.desc, textY);
-    doc.text(`${product.price.toLocaleString("sv-SE")}`, colX.price, textY, { align: "right" });
-    doc.text(`${(product.quantity * product.price).toLocaleString("sv-SE")} kr`, colX.total, textY, { align: "right" });
+    // First text baseline inside the row
+    const baseY = y + lineH;
+
+    doc.text(product.littra ?? "",                          col.littraL, baseY);
+    doc.text(String(product.quantity),                      col.qtyL,    baseY);
+    doc.text(descLines,                                     col.descL,   baseY);
+    doc.text(fmt(product.price),                            col.priceR,  baseY, { align: "right" });
+    doc.text(fmt(product.quantity * product.price) + " kr", col.totalR,  baseY, { align: "right" });
 
     if (imageDataUrls[i]) {
       try {
-        doc.addImage(imageDataUrls[i]!, "JPEG", colX.img, y - 2, imgSize, imgSize);
-      } catch {
-        // skip if image format not supported
-      }
+        doc.addImage(imageDataUrls[i]!, "JPEG", col.imgL, y + 1, imgSize, imgSize);
+      } catch { /* skip unsupported image format */ }
     }
 
     y += rowHeight;
   }
 
-  // Products subtotal
+  // ── SUMMARY BLOCK ──────────────────────────────────────────────────────────
+  // All rows share the same two X positions:
+  //   sumL = left edge of the label   (~85mm of space for label + value)
+  //   sumR = right edge of the value  (= rightEdge = 190mm)
+  const sumL = pageWidth - margin - 85; // 105mm
+  const sumR = rightEdge;               // 190mm
+
   const productTotal = data.products.reduce((s, p) => s + p.quantity * p.price, 0);
+
+  // Separator line + subtotal row
   y += 2;
   doc.setDrawColor(180);
-  doc.line(colX.price - 10, y - 4, pageWidth - margin, y - 4);
+  doc.line(sumL, y - 3, sumR, y - 3);
   doc.setFontSize(9);
-  doc.text("Produkter delsumma:", colX.price - 10, y);
-  doc.text(`${productTotal.toLocaleString("sv-SE")} kr`, colX.total, y, { align: "right" });
-  y += 7;
+  doc.setFont("helvetica", "normal");
+  doc.text("Produkter delsumma:", sumL, y);
+  doc.text(fmt(productTotal) + " kr", sumR, y, { align: "right" });
+  y += 6;
 
-  // Additional charges
+  // One row per charge (Frakt, Installation / Montage, Rabatt, …)
   for (const charge of data.charges) {
-    if (y > 260) {
-      doc.addPage();
-      y = 25;
-    }
-
-    let amount = typeof charge.amount === "number" ? charge.amount : parseFloat(String(charge.amount).replace(/[^0-9.\-]/g, "")) || 0;
-
-    if (charge.id === "discount") {
-      amount = -Math.abs(amount);
-    }
-
-    const label = String(charge.label || "—");
-    const amountStr = amount.toLocaleString("sv-SE") + " kr";
-
-    doc.text(label, colX.littra, y);
-    doc.text(amountStr, colX.total, y, { align: "right" });
-
+    if (y > 260) { doc.addPage(); y = 25; }
+    const raw    = toNum(charge.amount);
+    const amount = charge.id === "discount" ? -Math.abs(raw) : raw;
+    doc.text(charge.label || "-",  sumL, y);
+    doc.text(fmt(amount) + " kr",  sumR, y, { align: "right" });
     y += 6;
   }
 
   // Grand total (excl. VAT)
   const chargesTotal = data.charges.reduce((s, c) => {
-    const a = typeof c.amount === "number" ? c.amount : parseFloat(String(c.amount).replace(/[^0-9.\-]/g, "")) || 0;
+    const a = toNum(c.amount);
     return s + (c.id === "discount" ? -Math.abs(a) : a);
   }, 0);
   const grandTotal = productTotal + chargesTotal;
-  y += 2;
+
+  y += 1;
   doc.setDrawColor(100);
-  doc.line(colX.price - 10, y - 4, pageWidth - margin, y - 4);
+  doc.line(sumL, y - 3, sumR, y - 3);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.text("Total (ex. Moms):", colX.price - 10, y);
-  doc.text(`${grandTotal.toLocaleString("sv-SE")} kr`, colX.total, y, { align: "right" });
+  doc.text("Total (ex. Moms):", sumL, y);
+  doc.text(fmt(grandTotal) + " kr", sumR, y, { align: "right" });
   y += 8;
 
-  // VAT rows (optional)
+  // Optional VAT rows
   if (showVat) {
-    const vatAmount = grandTotal * VAT_RATE;
+    const vatAmount    = grandTotal * VAT_RATE;
     const totalInclVat = grandTotal + vatAmount;
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.text("Moms (25%):", colX.price - 10, y);
-    doc.text(`${vatAmount.toLocaleString("sv-SE")} kr`, colX.total, y, { align: "right" });
+    doc.text("Moms (25%):",        sumL, y);
+    doc.text(fmt(vatAmount) + " kr", sumR, y, { align: "right" });
     y += 6;
 
     doc.setDrawColor(100);
-    doc.line(colX.price - 10, y - 2, pageWidth - margin, y - 2);
+    doc.line(sumL, y - 2, sumR, y - 2);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
-    doc.text("Total (inkl. Moms):", colX.price - 10, y + 4);
-    doc.text(`${totalInclVat.toLocaleString("sv-SE")} kr`, colX.total, y + 4, { align: "right" });
+    doc.text("Total (inkl. Moms):",     sumL, y + 4);
+    doc.text(fmt(totalInclVat) + " kr", sumR, y + 4, { align: "right" });
     y += 12;
   } else {
     y += 6;
   }
 
-  // Offert text
-  if (y > 230) {
-    doc.addPage();
-    y = 25;
-  }
+  // ── QUOTE TEXT ─────────────────────────────────────────────────────────────
+  if (y > 230) { doc.addPage(); y = 25; }
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   const quoteLines = doc.splitTextToSize(data.quoteText, contentWidth);
