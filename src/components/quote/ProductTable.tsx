@@ -3,7 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, ImagePlus } from "lucide-react";
 import type { QuoteProduct } from "@/types/quote";
-import { useI18n } from "@/i18n/I18nProvider";
+import sv from "@/i18n/sv.json";
+
+const t = sv;
 
 interface ProductTableProps {
   products: QuoteProduct[];
