@@ -12,7 +12,7 @@ const emptyQuoteData: QuoteData = {
   date: new Date().toISOString().split("T")[0],
   quoteNumber: "",
   summary: "",
-  products: [{ id: "p0", name: "", description: "", quantity: 1, price: 0, imageUrl: "" }],
+  products: [{ id: "p0", description: "", quantity: 1, price: 0, imageUrl: "" }],
   charges: [
     { id: "shipping", label: "Frakt", amount: 0 },
     { id: "installation", label: "Installation / Montage", amount: 0 },

@@ -13,29 +13,25 @@ export function generateMockQuote(inputText: string): QuoteData {
     products: [
       {
         id: crypto.randomUUID(),
-        name: "Adventure Climbing Frame",
-        description: "Multi-level climbing structure with slides and rope bridges, ages 6–12",
+        description: "Adventure Climbing Frame – Multi-level climbing structure with slides and rope bridges, ages 6–12",
         quantity: 1,
         price: 28500,
       },
       {
         id: crypto.randomUUID(),
-        name: "Toddler Swing Set (4-seat)",
-        description: "Safety-harness swing set for ages 1–5, galvanized steel frame",
+        description: "Toddler Swing Set (4-seat) – Safety-harness swing set for ages 1–5, galvanized steel frame",
         quantity: 2,
         price: 8900,
       },
       {
         id: crypto.randomUUID(),
-        name: "Sandbox with Canopy",
-        description: "Large sandbox with UV-protective canopy, includes cover",
+        description: "Sandbox with Canopy – Large sandbox with UV-protective canopy, includes cover",
         quantity: 1,
         price: 4200,
       },
       {
         id: crypto.randomUUID(),
-        name: "Rubber Safety Surfacing (m²)",
-        description: "Impact-absorbing rubber tiles, EN 1177 certified",
+        description: "Rubber Safety Surfacing (m²) – Impact-absorbing rubber tiles, EN 1177 certified",
         quantity: 60,
         price: 350,
       },
