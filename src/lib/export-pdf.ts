@@ -43,7 +43,8 @@ export async function exportQuotePdf(data: QuoteData, showVat = false) {
   const { jsPDF } = await import("jspdf");
 
   const doc = new jsPDF({ unit: "mm", format: "a4" });
-  const pageWidth  = doc.internal.pageSize.getWidth(); // 210mm
+  const pageWidth  = doc.internal.pageSize.getWidth();  // 210mm
+  const pageHeight = doc.internal.pageSize.getHeight(); // 297mm (A4)
   const margin     = 20;
   const rightEdge  = pageWidth - margin;               // 190mm
   const contentWidth = pageWidth - margin * 2;         // 170mm
@@ -53,7 +54,7 @@ export async function exportQuotePdf(data: QuoteData, showVat = false) {
   // ── LOGO / HEADER ──────────────────────────────────────────────────────────
   // Load /logo.png from the public folder. Returns null on 404 → falls back
   // to the company name as text. Place a logo.png in /public to activate it.
-  const logoData = await loadImageAsDataUrl("/logo.png");
+  const logoData = await loadImageAsDataUrl("/rm-logo104923.png");
   const headerTopY = y;
 
   if (logoData) {
@@ -102,18 +103,19 @@ export async function exportQuotePdf(data: QuoteData, showVat = false) {
   // littraL / qtyL / descL / imgL are LEFT edges.
   // priceR / totalR are RIGHT edges (text rendered with { align: "right" }).
   const col = {
-    littraL: margin,         // 20mm
+    littraL: margin + 2,         // 22mm
     qtyL:    margin + 18,    // 38mm
     descL:   margin + 30,    // 50mm
     descW:   57,             // max text width for description wrapping
     imgL:    margin + 87,    // 107mm
     priceR:  margin + 140,   // 160mm  ← right edge of Á-pris column
-    totalR:  rightEdge,      // 190mm  ← right edge of Summa column
+    totalR:  rightEdge -5,      // 195mm  ← right edge of Summa column
   };
 
   // Table header background + column labels
-  doc.setFillColor(240, 240, 243);
+  doc.setFillColor(60, 91, 113); // dark blue
   doc.rect(margin, y - 4, contentWidth, 8, "F");
+  doc.setTextColor(255, 255, 255);
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
   doc.text("Littra",      col.littraL, y);
@@ -123,6 +125,8 @@ export async function exportQuotePdf(data: QuoteData, showVat = false) {
   doc.text("A-pris",      col.priceR,  y, { align: "right" });
   doc.text("Summa",       col.totalR,  y, { align: "right" });
   y += 7;
+
+  doc.setTextColor(0, 0, 0);
 
   // Pre-load all product images in parallel
   const imageDataUrls: (string | null)[] = await Promise.all(
@@ -237,6 +241,26 @@ export async function exportQuotePdf(data: QuoteData, showVat = false) {
   doc.setFontSize(9);
   const quoteLines = doc.splitTextToSize(data.quoteText, contentWidth);
   doc.text(quoteLines, margin, y);
+
+  // ── FOOTER (stamped on every page after all content is drawn) ─────────────
+  // Drawing footers last means y-position tracking is never affected.
+  const totalPages = doc.getNumberOfPages();
+  const footerY    = pageHeight - 10;
+
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    doc.setDrawColor(150);
+    doc.setLineWidth(0.2);
+    doc.line(margin, footerY - 3, rightEdge, footerY - 3);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text(
+      "Web: lekplats.se | Tel: 031 - 550 700 | info@lekplats.se | Org.nr: 556871 7960",
+      margin,
+      footerY
+    );
+    doc.text(`Sida ${p}`, rightEdge, footerY, { align: "right" });
+  }
 
   doc.save(`${data.quoteNumber}.pdf`);
 }
