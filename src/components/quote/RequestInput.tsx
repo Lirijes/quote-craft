@@ -4,7 +4,9 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Upload, Sparkles, Loader2 } from "lucide-react";
-import { useI18n } from "@/i18n/I18nProvider";
+import sv from "@/i18n/sv.json";
+
+const t = sv;
 
 interface RequestInputProps {
   onGenerate: (text: string) => void;
@@ -12,7 +14,7 @@ interface RequestInputProps {
 }
 
 export function RequestInput({ onGenerate, isGenerating }: RequestInputProps) {
-  const { t } = useI18n();
+  
   const [text, setText] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
 

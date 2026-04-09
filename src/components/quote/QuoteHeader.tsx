@@ -1,7 +1,9 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { QuoteData } from "@/types/quote";
-import { useI18n } from "@/i18n/I18nProvider";
+import sv from "@/i18n/sv.json";
+
+const t = sv;
 
 interface QuoteHeaderProps {
   data: Pick<QuoteData, "customerName" | "date" | "quoteNumber">;
@@ -9,7 +11,7 @@ interface QuoteHeaderProps {
 }
 
 export function QuoteHeader({ data, onChange }: QuoteHeaderProps) {
-  const { t } = useI18n();
+  
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div className="space-y-1.5">

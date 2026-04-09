@@ -91,31 +91,27 @@ export async function exportQuotePdf(data: QuoteData) {
       y = 25;
     }
 
-    let amount = Number(charge.amount);
+    let amount = typeof charge.amount === "number" ? charge.amount : parseFloat(String(charge.amount).replace(/[^0-9.\-]/g, "")) || 0;
 
-    if (isNaN(amount)) {
-      console.warn("INVALID AMOUNT:", charge.amount);
-      amount = 0;
-    }
-
-    // discount negativ
+    // discount negative
     if (charge.id === "discount") {
       amount = -Math.abs(amount);
     }
 
-    doc.text(String(charge.label || "—"), colX.price, y);
+    const label = String(charge.label || "—");
+    const amountStr = amount.toLocaleString("sv-SE") + " kr";
 
-    doc.text(
-      `${amount.toLocaleString("sv-SE")} kr`,
-      colX.total,
-      y
-    );
+    doc.text(label, colX.qty, y);
+    doc.text(amountStr, colX.total, y);
 
     y += 6;
   }
 
   // Grand total
-  const chargesTotal = data.charges.reduce((s, c) => s + c.amount, 0);
+  const chargesTotal = data.charges.reduce((s, c) => {
+    const a = typeof c.amount === "number" ? c.amount : parseFloat(String(c.amount).replace(/[^0-9.\-]/g, "")) || 0;
+    return s + (c.id === "discount" ? -Math.abs(a) : a);
+  }, 0);
   const grandTotal = productTotal + chargesTotal;
   y += 2;
   doc.setDrawColor(100);

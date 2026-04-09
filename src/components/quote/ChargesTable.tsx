@@ -2,7 +2,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import type { QuoteCharge } from "@/types/quote";
-import { useI18n } from "@/i18n/I18nProvider";
+import sv from "@/i18n/sv.json";
+
+const t = sv;
 
 interface ChargesTableProps {
   charges: QuoteCharge[];
@@ -11,19 +13,11 @@ interface ChargesTableProps {
 }
 
 export function ChargesTable({ charges, onChange, productTotal }: ChargesTableProps) {
-  const { t } = useI18n();
-
   const updateCharge = (id: string, field: keyof QuoteCharge, value: string | number) => {
-  onChange(
+    onChange(
       charges.map((c) =>
         c.id === id
-          ? {
-              ...c,
-              [field]:
-                field === "amount"
-                  ? Number(value) || 0
-                  : value,
-            }
+          ? { ...c, [field]: field === "amount" ? Number(value) || 0 : value }
           : c
       )
     );

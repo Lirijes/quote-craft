@@ -3,7 +3,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2, ImagePlus } from "lucide-react";
 import type { QuoteProduct } from "@/types/quote";
-import { useI18n } from "@/i18n/I18nProvider";
+import sv from "@/i18n/sv.json";
+
+const t = sv;
 
 interface ProductTableProps {
   products: QuoteProduct[];
@@ -11,7 +13,7 @@ interface ProductTableProps {
 }
 
 export function ProductTable({ products, onChange }: ProductTableProps) {
-  const { t } = useI18n();
+  
 
   const updateProduct = (id: string, field: keyof QuoteProduct, value: string | number) => {
     onChange(products.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
@@ -83,7 +85,7 @@ function ProductRow({
   onRemove: (id: string) => void;
   onImageUpload: (id: string, file: File) => void;
 }) {
-  const { t } = useI18n();
+  
   const fileRef = useRef<HTMLInputElement>(null);
 
   return (
