@@ -13,14 +13,12 @@ interface ProductTableProps {
 }
 
 export function ProductTable({ products, onChange }: ProductTableProps) {
-  
-
   const updateProduct = (id: string, field: keyof QuoteProduct, value: string | number) => {
     onChange(products.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
   };
 
   const addProduct = () => {
-    onChange([...products, { id: crypto.randomUUID(), name: "", description: "", quantity: 1, price: 0 }]);
+    onChange([...products, { id: crypto.randomUUID(), description: "", quantity: 1, price: 0 }]);
   };
 
   const removeProduct = (id: string) => {
@@ -48,9 +46,8 @@ export function ProductTable({ products, onChange }: ProductTableProps) {
             <thead>
               <tr className="bg-muted/60 text-muted-foreground text-xs">
                 <th className="text-left p-3 font-medium w-16">{t.products.qty}</th>
-                <th className="text-left p-3 font-medium">{t.products.product}</th>
-                <th className="text-left p-3 font-medium hidden sm:table-cell">{t.products.description}</th>
-                <th className="text-center p-3 font-medium w-20">{t.products.image}</th>
+                <th className="text-left p-3 font-medium">{t.products.description}</th>
+                <th className="text-center p-3 font-medium w-24">{t.products.image}</th>
                 <th className="text-right p-3 font-medium w-28">{t.products.unitPrice}</th>
                 <th className="text-right p-3 font-medium w-28">{t.products.total}</th>
                 <th className="w-10 p-3" />
@@ -85,7 +82,6 @@ function ProductRow({
   onRemove: (id: string) => void;
   onImageUpload: (id: string, file: File) => void;
 }) {
-  
   const fileRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -94,20 +90,17 @@ function ProductRow({
         <Input type="number" min={1} className="w-16 h-8 text-sm text-center" value={product.quantity} onChange={(e) => onUpdate(product.id, "quantity", parseInt(e.target.value) || 0)} />
       </td>
       <td className="p-2">
-        <Input className="h-8 text-sm" value={product.name} onChange={(e) => onUpdate(product.id, "name", e.target.value)} placeholder={t.products.productName} />
-      </td>
-      <td className="p-2 hidden sm:table-cell">
         <Input className="h-8 text-sm" value={product.description} onChange={(e) => onUpdate(product.id, "description", e.target.value)} placeholder={t.products.description} />
       </td>
       <td className="p-2 text-center">
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) onImageUpload(product.id, file); }} />
         {product.imageUrl ? (
           <button type="button" onClick={() => fileRef.current?.click()} className="mx-auto block rounded overflow-hidden border border-border hover:border-primary transition-colors">
-            <img src={product.imageUrl} alt="" className="h-10 w-10 object-cover" />
+            <img src={product.imageUrl} alt="" className="h-16 w-16 object-cover" />
           </button>
         ) : (
-          <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground" onClick={() => fileRef.current?.click()}>
-            <ImagePlus className="h-4 w-4" />
+          <Button variant="ghost" size="icon" className="h-16 w-16 text-muted-foreground" onClick={() => fileRef.current?.click()}>
+            <ImagePlus className="h-5 w-5" />
           </Button>
         )}
       </td>

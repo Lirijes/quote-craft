@@ -31,8 +31,7 @@ export function generateMockQuote(inputText: string): QuoteData {
       },
       {
         id: crypto.randomUUID(),
-        name: "Rubber Safety Surfacing (m²)",
-        description: "Impact-absorbing rubber tiles, EN 1177 certified",
+        description: "Rubber Safety Surfacing (m²) – Impact-absorbing rubber tiles, EN 1177 certified",
         quantity: 60,
         price: 350,
       },
