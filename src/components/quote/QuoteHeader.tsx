@@ -1,7 +1,9 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { QuoteData } from "@/types/quote";
-import { useI18n } from "@/i18n/I18nProvider";
+import sv from "@/i18n/sv.json";
+
+const t = sv;
 
 interface QuoteHeaderProps {
   data: Pick<QuoteData, "customerName" | "date" | "quoteNumber">;
