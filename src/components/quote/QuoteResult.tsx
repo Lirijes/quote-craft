@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -9,15 +9,20 @@ import { ProductTable } from "./ProductTable";
 import { ChargesTable } from "./ChargesTable";
 import type { QuoteData } from "@/types/quote";
 import { exportQuotePdf } from "@/lib/export-pdf";
-import { useI18n } from "@/i18n/I18nProvider";
+import sv from "@/i18n/sv.json";
+
+const t = sv;
 
 interface QuoteResultProps {
   initialData: QuoteData;
 }
 
 export function QuoteResult({ initialData }: QuoteResultProps) {
-  const { t } = useI18n();
   const [data, setData] = useState<QuoteData>(initialData);
+
+  useEffect(() => {
+    setData(initialData);
+  }, [initialData]);
 
   const updateField = <K extends keyof QuoteData>(field: K, value: QuoteData[K]) => {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -43,6 +48,7 @@ export function QuoteResult({ initialData }: QuoteResultProps) {
           className="text-sm resize-y min-h-[80px]"
           value={data.summary}
           onChange={(e) => updateField("summary", e.target.value)}
+          placeholder="Skriv en sammanfattning av förfrågan..."
         />
       </div>
 
@@ -56,6 +62,7 @@ export function QuoteResult({ initialData }: QuoteResultProps) {
           className="text-sm resize-y min-h-[160px]"
           value={data.quoteText}
           onChange={(e) => updateField("quoteText", e.target.value)}
+          placeholder="Skriv offertmeddelande här..."
         />
       </div>
     </Card>
