@@ -13,8 +13,7 @@ export function generateMockQuote(inputText: string): QuoteData {
     products: [
       {
         id: crypto.randomUUID(),
-        name: "Adventure Climbing Frame",
-        description: "Multi-level climbing structure with slides and rope bridges, ages 6–12",
+        description: "Adventure Climbing Frame – Multi-level climbing structure with slides and rope bridges, ages 6–12",
         quantity: 1,
         price: 28500,
       },
