@@ -25,8 +25,7 @@ export function generateMockQuote(inputText: string): QuoteData {
       },
       {
         id: crypto.randomUUID(),
-        name: "Sandbox with Canopy",
-        description: "Large sandbox with UV-protective canopy, includes cover",
+        description: "Sandbox with Canopy – Large sandbox with UV-protective canopy, includes cover",
         quantity: 1,
         price: 4200,
       },
