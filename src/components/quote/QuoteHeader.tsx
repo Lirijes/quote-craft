@@ -11,7 +11,7 @@ interface QuoteHeaderProps {
 }
 
 export function QuoteHeader({ data, onChange }: QuoteHeaderProps) {
-  const { t } = useI18n();
+  
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div className="space-y-1.5">

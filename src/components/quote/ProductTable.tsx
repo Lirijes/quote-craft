@@ -85,7 +85,7 @@ function ProductRow({
   onRemove: (id: string) => void;
   onImageUpload: (id: string, file: File) => void;
 }) {
-  const { t } = useI18n();
+  
   const fileRef = useRef<HTMLInputElement>(null);
 
   return (

@@ -14,7 +14,7 @@ interface RequestInputProps {
 }
 
 export function RequestInput({ onGenerate, isGenerating }: RequestInputProps) {
-  const { t } = useI18n();
+  
   const [text, setText] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
 
