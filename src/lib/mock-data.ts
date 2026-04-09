@@ -19,8 +19,7 @@ export function generateMockQuote(inputText: string): QuoteData {
       },
       {
         id: crypto.randomUUID(),
-        name: "Toddler Swing Set (4-seat)",
-        description: "Safety-harness swing set for ages 1–5, galvanized steel frame",
+        description: "Toddler Swing Set (4-seat) – Safety-harness swing set for ages 1–5, galvanized steel frame",
         quantity: 2,
         price: 8900,
       },
