@@ -13,7 +13,7 @@ interface ProductTableProps {
 }
 
 export function ProductTable({ products, onChange }: ProductTableProps) {
-  const { t } = useI18n();
+  
 
   const updateProduct = (id: string, field: keyof QuoteProduct, value: string | number) => {
     onChange(products.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
